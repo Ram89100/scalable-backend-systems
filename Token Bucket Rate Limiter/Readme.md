@@ -25,6 +25,44 @@ The rate limiter ensures system stability by limiting how many requests can be p
 
 ## Architecture Diagram (Logical View)
 
+                            ┌──────────────┐
+                            │    Client    │
+                            │ (Browser /   │
+                            │  Mobile App  │
+                            │  Service)    │
+                            └──────┬───────┘
+                                   │ HTTP Request
+                                   ▼
+                            ┌──────────────────────┐
+                            │      API Layer       │
+                            │  (Controller /       │
+                            │   Endpoint Handler)  │
+                            └──────┬───────────────┘
+                                   │ tryAcquire()
+                                   ▼
+                            ┌──────────────────────┐
+                            │ Token Bucket Rate    │
+                            │      Limiter         │
+                            │                      │
+                            │  ┌───────────────┐   │
+                            │  │ Bucket State  │   │
+                            │  │---------------│   │
+                            │  │ Capacity      │   │
+                            │  │ Tokens        │   │
+                            │  │ Refill Rate   │   │
+                            │  │ Last Refill   │   │
+                            │  └───────────────┘   │
+                            │                      │
+                            │  Time-Based Refill   │
+                            │  + Thread Safety     │
+                            └──────┬───────────────┘
+                                   │
+                                   │ Allow / Reject
+                                   ▼
+                            ┌──────────────────────┐
+                            │  Backend Service     │
+                            │  (Business Logic)    │
+                            └──────────────────────┘
 
 ---
 
@@ -48,11 +86,18 @@ The rate limiter ensures system stability by limiting how many requests can be p
 
 ---
 
-### 3. Token Bucket Rate Limiter
+### 3. Why Token Bucket
 
-The core component responsible for enforcing rate limits.
+Token Bucket is chosen because it allows controlled burst traffic
+while enforcing a long-term average request rate.
 
-#### Internal State
+Unlike fixed-window algorithms, it avoids request spikes at window
+boundaries and provides smoother traffic shaping.
+
+
+
+
+####   Internal State
 
 - **Bucket Capacity**
   - Maximum number of tokens allowed in the bucket
@@ -164,9 +209,30 @@ The core component responsible for enforcing rate limits.
 - Demonstration projects and interviews
 
 ---
+### Example Configuration & Behavior
+    Capacity: 10 tokens
+    Refill Rate: 5 tokens/second
+
+    • First 10 requests → allowed immediately
+    • Next requests → allowed at 5 req/sec
+    • Excess requests → rejected with HTTP 429
+
+
+### Performance and  Characteristics
+Time Complexity: O(1) per request
+Space Complexity: O(1) per token bucket
+
+Synchronization ensures correctness under concurrency.
+Under extremely high contention, lock-based design may introduce
+minor latency, which can be optimized using CAS-based approaches.
+
 
 ## Summary
 
-This Token Bucket Rate Limiter provides a **thread-safe, time-based, and configurable solution for API throttling**.  
-While scoped for single-node deployments, it demonstrates strong understanding of rate-limiting algorithms, concurrency control, and system design trade-offs, with clear paths for extension to distributed systems.
+This Token Bucket Rate Limiter provides a thread-safe, time-based,
+and configurable solution for API throttling in single-node systems.
 
+It demonstrates strong understanding of rate-limiting algorithms,
+concurrency control, and system design trade-offs, with a clear
+path toward distributed rate limiting using external coordination
+systems such as Redis.
