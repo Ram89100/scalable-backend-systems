@@ -1,6 +1,6 @@
-# Thread-Safe LRU Cache in Java
+# Thread-Safe LRU Cache in C++
 
-A **thread-safe Least Recently Used (LRU) Cache** implementation in **Java**, designed for high performance, concurrency, and clean architecture. This project includes comprehensive documentation, real-world usage examples, and unit tests covering edge cases and concurrent access.
+A **thread-safe Least Recently Used (LRU) Cache** implementation in **C++**, designed for high performance, concurrency, and clean architecture. This project includes comprehensive documentation, real-world usage examples, and unit tests covering edge cases and concurrent access.
 
 ---
 
@@ -19,7 +19,7 @@ This implementation is ideal for:
 ## ✨ Features
 
 - 🔒 **Thread-Safe**
-  - Uses `ReentrantReadWriteLock` to allow safe concurrent access
+  - Uses `std::shared_mutex` to allow safe concurrent access
 - ⚡ **O(1) Time Complexity**
   - `get`, `put`, and `remove` operations run in constant time
 - ♻️ **Automatic LRU Eviction**
@@ -27,7 +27,7 @@ This implementation is ideal for:
 - 📦 **Customizable Capacity**
   - Set cache size at initialization
 - 🧩 **Generic Implementation**
-  - Supports any key-value types using Java Generics
+  - Supports any key-value types using C++ Templates
 - 🧪 **Comprehensive Tests**
   - Unit tests + edge cases + concurrency tests
 
@@ -39,33 +39,36 @@ The cache is implemented using a combination of:
 
 | Component | Purpose |
 |---------|--------|
-| `HashMap<K, CacheNode>` | O(1) key lookup |
-| `Doubly Linked List` | Maintains access order |
-| `ReentrantReadWriteLock` | Thread-safe concurrent access |
+| `std::unordered_map<K, Node>` | O(1) key lookup |
+| `std::shared_ptr<Node>` linked list | Maintains access order |
+| `std::shared_mutex` | Thread-safe concurrent access |
 
 ### Why This Design?
-- HashMap gives fast lookup
-- Doubly linked list enables O(1) insertion and removal
-- Locks ensure safe multi-threaded access
+- `unordered_map` gives fast lookup
+- Shared pointer linked list enables O(1) insertion and removal
+- `shared_mutex` ensures safe multi-threaded access
 
 ---
 
 ## 🚀 Usage
 
-```java
+```cpp
 // Create a cache with capacity of 5
-LRUCache<String, String> cache = new LRUCache<>(5);
+LRUCache<std::string, std::string> cache(5);
 
 // Put values
 cache.put("key1", "value1");
 cache.put("key2", "value2");
 
 // Get value
-String value = cache.get("key1");
+auto value = cache.get("key1");
+if (value) {
+    std::cout << *value << std::endl;
+}
 
 // Check existence
 if (cache.containsKey("key1")) {
-    System.out.println("Key found in cache");
+    std::cout << "Key found in cache" << std::endl;
 }
 
 // Remove a key
@@ -104,33 +107,29 @@ cache.clear();
 
 ### 🔐 Thread Safety
 
-This cache supports safe concurrent access using ReentrantReadWriteLock:
+This cache supports safe concurrent access using `std::shared_mutex`:
 
-- Multiple readers can access simultaneously
+- Multiple readers can access simultaneously via shared locks
 
--   Writes are exclusive
+- Writes are exclusive via unique locks
 
--   Prevents race conditions and data corruption
+- Prevents race conditions and data corruption
 
-Suitable for multi-threaded backend services.
+Suitable for multi-threaded C++ backend services.
 ### 📁 Project Structure
     LRU-Cache/
-    ├── src/
-    │   ├── LRUCache.java
-    │   ├── CacheNode.java
-    │   └── CacheEntry.java
-    ├── test/
-    │   └── LRUCacheTest.java
+    ├── LRUCache.h
+    ├── LRUCacheTest.cpp
     ├── README.md
     ├── LICENSE
-    └── .gitignore
+    └── Readme.md
 
 
 
 
 ### 🧪 Example Scenarios
 ### 1️⃣ Basic Cache Usage
-    LRUCache<Integer, Integer> cache = new LRUCache<>(3);
+    LRUCache<int, int> cache(3);
     cache.put(1, 1);
     cache.put(2, 2);
     cache.put(3, 3);
@@ -141,7 +140,7 @@ Suitable for multi-threaded backend services.
     Cache: {2=2, 3=3, 4=4}
 
 ### 2️⃣ Access Updates Order
-    LRUCache<Integer, Integer> cache = new LRUCache<>(3);
+    LRUCache<int, int> cache(3);
     cache.put(1, 1);
     cache.put(2, 2);
     cache.put(3, 3);
@@ -155,15 +154,15 @@ Suitable for multi-threaded backend services.
 
 - Generic Programming
 
-    - Java Generics for type safety
+    - C++ Templates for type safety
 
 - Synchronization
 
-    - Read-write locking for concurrency
+    - Shared mutex locking for concurrency
 
 - Composite Data Structures
 
-    - HashMap + Doubly Linked List
+    - unordered_map + Doubly Linked List (via shared_ptr)
 
 
 ### 🚧 Limitations & Future Enhancements
