@@ -3,7 +3,7 @@
 ## Overview
 
 This project implements a **Token Bucket Rate Limiter** to control the rate of incoming API requests.  
-It is designed to be **thread-safe**, **time-based**, and suitable for **API throttling in a single-node (single-JVM) environment**.
+It is designed to be **thread-safe**, **time-based**, and suitable for **API throttling in a single-node C++ environment**.
 
 The rate limiter ensures system stability by limiting how many requests can be processed within a given time window.
 
@@ -79,10 +79,10 @@ The core component responsible for enforcing rate limits.
 
 ### 5. Concurrency & Thread Safety
 
-- `tryAcquire()` is synchronized
+- `tryAcquire()` is guarded by `std::mutex`
 - Ensures only one thread modifies token state at a time
 - Prevents race conditions under concurrent access
-- Safe for multi-threaded environments within a single JVM
+- Safe for multi-threaded C++ environments within a single process
 
 ---
 
@@ -126,7 +126,7 @@ The core component responsible for enforcing rate limits.
 
 - Not suitable for distributed systems
 - State is stored in application memory
-- Synchronization works only within a single JVM
+- Synchronization works only within a single C++ process
 - Requires external coordination for multi-instance setups
 
 ---
@@ -147,7 +147,8 @@ The core component responsible for enforcing rate limits.
 - Protect backend services early in request flow
 
 ### 4. High-Performance Non-Blocking Design
-- Replace `synchronized` with CAS-based atomic operations
+- Replace `std::mutex` with lock-free atomic operations
+- Improve throughput under high contention
 - Improve throughput under high contention
 
 ### 5. Monitoring & Metrics
